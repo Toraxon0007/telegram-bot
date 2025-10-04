@@ -1,19 +1,13 @@
+import os
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import re
-import os
-from dotenv import load_dotenv
-
-# === Muhit o'zgaruvchilarini yuklash ===
-load_dotenv()
 
 # === Sozlamalar ===
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = os.getenv("BOT_TOKEN")  # Token endi muhitdan olinadi (Render yoki .env dan)
 ADMIN_ID = 6234736126
 CARD_NUMBER = "9860 1678 2074 3752"
 CARD_OWNER = "I. TORAXON"
-
-bot = telebot.TeleBot(BOT_TOKEN)
 
 # === Xizmatlar ===
 SERVICES = {
@@ -55,6 +49,8 @@ SERVICES = {
     }
 }
 
+bot = telebot.TeleBot(BOT_TOKEN)
+
 # --- Helper ---
 def format_amount(amount_int):
     return f"{amount_int:,}".replace(",", " ") + " so'm"
@@ -79,9 +75,10 @@ def start(message):
     kb.add(InlineKeyboardButton("✨ Telegram Stars", callback_data="service:stars"))
     kb.add(InlineKeyboardButton("💎 Mobile Legends", callback_data="service:mlbb"))
     kb.add(InlineKeyboardButton("🎮 PUBG UC", callback_data="service:uc"))
+
     bot.send_message(message.chat.id, "Assalomu alaykum! Quyidagi xizmatlardan birini tanlang 👇", reply_markup=kb)
 
-# === Oddiy To'lov ===
+# === Oddiy To'lov darrov summa kiritish ===
 @bot.callback_query_handler(func=lambda c: c.data == "service:pay")
 def handle_pay(call):
     msg = bot.send_message(call.message.chat.id, "Iltimos, to'lov summasini kiriting (masalan: 37000):")
@@ -95,14 +92,19 @@ def process_custom_amount(message, service_code):
         return
     send_payment_info(message.chat.id, service_code, amount_int, "Custom")
 
-# === Xizmat tariflari ===
+# === Qolgan xizmatlar tariflari ===
 @bot.callback_query_handler(func=lambda c: c.data.startswith("service:") and c.data != "service:pay")
 def handle_service(call):
     service_code = call.data.split(":")[1]
     service = SERVICES[service_code]
     kb = InlineKeyboardMarkup()
     for tariff, price in service["tariffs"].items():
-        kb.add(InlineKeyboardButton(f"{tariff} - {format_amount(price)}", callback_data=f"tariff:{service_code}:{tariff}:{price}"))
+        kb.add(
+            InlineKeyboardButton(
+                f"{tariff} - {format_amount(price)}",
+                callback_data=f"tariff:{service_code}:{tariff}:{price}"
+            )
+        )
     kb.add(InlineKeyboardButton("💳 Oddiy To'lov", callback_data="service:pay"))
     bot.send_message(call.message.chat.id, f"{service['name']} uchun tarifni tanlang 👇", reply_markup=kb)
 
@@ -124,11 +126,12 @@ def send_payment_info(chat_id, service_code, amount_int, tariff_name):
             f"Karta raqami: <code>{CARD_NUMBER}</code>\n"
             f"Karta egasi: {CARD_OWNER}\n\n"
             f"✅ To'lovni amalga oshirgach, pastdagi tugmani bosing yoki oxirgi 4 raqamni yuboring.")
+
     bot.send_message(chat_id, text, parse_mode="HTML", reply_markup=kb)
     msg = bot.send_message(chat_id, "Iltimos, kartaning oxirgi 4 raqamini yuboring (masalan: 1234):")
     bot.register_next_step_handler(msg, process_card_last4, service_code, amount_int, tariff_name)
 
-# === Men to'lov qildim ===
+# === "Men to'lov qildim" ===
 @bot.callback_query_handler(func=lambda c: c.data.startswith("paid:"))
 def handle_paid(call):
     _, service_code, amount_raw, tariff_name = call.data.split(":")
