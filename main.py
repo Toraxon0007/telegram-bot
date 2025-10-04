@@ -4,7 +4,7 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import re
 
 # === Sozlamalar ===
-BOT_TOKEN = os.getenv("BOT_TOKEN")  # Token endi muhitdan olinadi (Render yoki .env dan)
+BOT_TOKEN = os.getenv("BOT_TOKEN")  # Tokenni .env fayldan oladi
 ADMIN_ID = 6234736126
 CARD_NUMBER = "9860 1678 2074 3752"
 CARD_OWNER = "I. TORAXON"
