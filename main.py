@@ -1,6 +1,7 @@
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import re
+import time
 
 # === Sozlamalar ===
 BOT_TOKEN = "8114837659:AAHYY_MbvGE2J_ps7M98MmYVljBCNJavGVE"
@@ -10,7 +11,7 @@ CARD_OWNER = "I. TORAXON"
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# === Formatlash uchun ===
+# === Formatlash ===
 def format_amount(num):
     return f"{num:,}".replace(",", " ") + " so'm"
 
@@ -112,7 +113,6 @@ def show_uc(chat_id):
 @bot.callback_query_handler(func=lambda c: True)
 def callbacks(call):
     data = call.data
-
     if data == "premium":
         show_premium(call.message.chat.id)
     elif data == "stars":
@@ -123,7 +123,6 @@ def callbacks(call):
         show_uc(call.message.chat.id)
     elif data == "back":
         start(call.message)
-
     elif data.startswith("buy:"):
         _, service, tariff, price = data.split(":")
         send_payment_info(call.message.chat.id, service, tariff, int(price))
@@ -168,7 +167,6 @@ def process_card_last4(message, service, tariff, price):
 def process_fullname(message, card4, service, tariff, price):
     fullname = message.text.strip()
     formatted = format_amount(int(price))
-
     bot.send_message(message.chat.id, f"✅ Ma'lumot yuborildi. Admin tez orada tasdiqlaydi.")
     admin_text = (
         f"📩 <b>Yangi to‘lov</b>\n\n"
@@ -182,6 +180,12 @@ def process_fullname(message, card4, service, tariff, price):
     bot.send_message(ADMIN_ID, admin_text, parse_mode="HTML")
 
 
-# === Botni ishga tushirish ===
-print("🤖 Bot ishga tushdi...")
-bot.infinity_polling(skip_pending=True)
+# === Railway uchun barqaror ishlash ===
+if __name__ == "__main__":
+    print("🤖 Bot Railway’da ishga tushdi...")
+    while True:
+        try:
+            bot.polling(non_stop=True, skip_pending=True, timeout=10)
+        except Exception as e:
+            print("⚠️ Xatolik:", e)
+            time.sleep(5)
